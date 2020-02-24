@@ -39,7 +39,7 @@ class _VideoPlayerTextState extends State<VideoPlayerText> {
   VideoPlayerController _controller; // 记录video播放进度
   Duration _position = Duration(seconds: 0); //播放时长
   Duration _totalDuration = Duration(seconds: 0); //总时长
-
+  double movePan = 0.0; // 偏移量累计总和
   // 记录播放控件ui是否显示(进度条，播放按钮，全屏按钮等等)
   Timer _timer; // 计时器，用于延迟隐藏控件ui
   bool _hidePlayControl = true; // 控制是否隐藏控件ui
@@ -48,6 +48,7 @@ class _VideoPlayerTextState extends State<VideoPlayerText> {
   bool get _isFullScreen =>
       MediaQuery.of(context).orientation == Orientation.landscape;
 
+  //内容区
   @override
   Widget build(BuildContext context) {
     return Container(
@@ -58,13 +59,22 @@ class _VideoPlayerTextState extends State<VideoPlayerText> {
           ? Stack(
               // 因为控件ui和视频是重叠的，所以要用定位了
               children: <Widget>[
-                _topBar(context),
+                _topBar(context),           //头部栏
                 GestureDetector(
                   // 手势组件
                   onTap: () {
                     // 点击显示/隐藏控件ui
                     _togglePlayControl();
                   },
+                  //双击暂停/播放
+                  onDoubleTap: () {
+                    _controller.value.isPlaying
+                        ? _controller.pause()
+                        : _controller.play();
+                  },
+                  onHorizontalDragStart: _onHorizontalDragStart,
+                  onHorizontalDragUpdate: _onHorizontalDragUpdate,
+                  onHorizontalDragEnd: _onHorizontalDragEnd,
                   child: _videoInit
                       ? Center(
                           child: AspectRatio(
@@ -82,7 +92,7 @@ class _VideoPlayerTextState extends State<VideoPlayerText> {
                           ),
                         ),
                 ),
-                _bottomBar(context),
+                _bottomBar(context),    //底部栏
               ],
             )
           : Center(
@@ -224,8 +234,14 @@ class _VideoPlayerTextState extends State<VideoPlayerText> {
                         ),
                       ),
                       IconButton(
-                        // 全屏/横屏按钮
-                        padding: EdgeInsets.zero,
+                        iconSize: 23,
+                        icon: Icon(
+                          Icons.settings,
+                          color: Colors.white,
+                        ),
+                        onPressed: () {},
+                      ),
+                      IconButton(
                         iconSize: 26,
                         icon: Icon(
                           // 根据当前屏幕方向切换图标
@@ -323,6 +339,58 @@ class _VideoPlayerTextState extends State<VideoPlayerText> {
           });
         });
     }
+  }
+
+  //水平滑动开始
+  void _onHorizontalDragStart(DragStartDetails details) async {
+    if (!_videoInit) {
+      return;
+    }
+    // 获取当前时间
+    _position = _controller.value.position;
+  }
+
+  //滑动更新/快进/快退
+  void _onHorizontalDragUpdate(DragUpdateDetails details) {
+    if (!_videoInit) {
+      return;
+    }
+    // 累计计算偏移量
+    movePan += details.delta.dx / 10;
+    double value = _setHorizontalValue();
+    // 用百分比计算出当前的秒数
+    String currentSecond = DateUtil.formatDateMs(
+      (value * _controller.value.duration.inMilliseconds).toInt(),
+      format: 'mm:ss',
+    );
+  }
+
+  //滑动结束
+  void _onHorizontalDragEnd(DragEndDetails details) async {
+    if (!_videoInit) {
+      return;
+    }
+    double value = _setHorizontalValue();
+    int current = (value * _controller.value.duration.inMilliseconds).toInt();
+    await _controller.seekTo(Duration(milliseconds: current));
+  }
+
+  //进度条变化
+  double _setHorizontalValue() {
+    // 进度条百分控制
+    double valueHorizontal =
+        double.parse((movePan / context.size.width).toStringAsFixed(2));
+    // 当前进度条百分比
+    double currentValue =
+        _position.inMilliseconds / _controller.value.duration.inMilliseconds;
+    double value =
+        double.parse((currentValue + valueHorizontal).toStringAsFixed(2));
+    if (value >= 1.00) {
+      value = 1.00;
+    } else if (value <= 0.00) {
+      value = 0.00;
+    }
+    return value;
   }
 
   //视频监听（进度条）
