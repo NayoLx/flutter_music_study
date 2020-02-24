@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:io';
 
 import 'package:common_utils/common_utils.dart';
 import 'package:flutter/material.dart';
@@ -9,6 +10,7 @@ import 'package:video_player/video_player.dart'; // 引入官方插件
 class VideoPlayerText extends StatefulWidget {
   VideoPlayerText({
     @required this.url, // 当前需要播放的地址
+    this.file,
     @required this.width, // 播放器尺寸（大于等于视频播放区域）
     @required this.height,
     this.title = '', // 视频需要显示的标题
@@ -16,6 +18,7 @@ class VideoPlayerText extends StatefulWidget {
 
   // 视频地址
   final String url;
+  final File file;
 
   // 视频尺寸比例
   final double width;
@@ -51,7 +54,7 @@ class _VideoPlayerTextState extends State<VideoPlayerText> {
       width: widget.width,
       height: widget.height,
       color: Colors.black,
-      child: widget.url != null
+      child: widget.file != null || widget.url != null
           ? Stack(
               // 因为控件ui和视频是重叠的，所以要用定位了
               children: <Widget>[
@@ -64,8 +67,7 @@ class _VideoPlayerTextState extends State<VideoPlayerText> {
                   },
                   child: _videoInit
                       ? Center(
-                          child: AspectRatio(
-                            // 加载url成功时，根据视频比例渲染播放器
+                          child: AspectRatio(         // 加载url或者file成功时，根据视频比例渲染播放器
                             aspectRatio: _controller.value.aspectRatio,
                             child: VideoPlayer(_controller),
                           ),
@@ -82,8 +84,7 @@ class _VideoPlayerTextState extends State<VideoPlayerText> {
                 _bottomBar(context),
               ],
             )
-          : Center(
-              // 判断是否传入了url，没有的话显示"暂无视频信息"
+          : Center(       // 判断是否传入了url或者file，没有的话显示"暂无视频信息"
               child: Text(
                 '暂无视频信息',
                 style: TextStyle(color: Colors.white),
@@ -180,7 +181,6 @@ class _VideoPlayerTextState extends State<VideoPlayerText> {
                           color: Colors.white,
                         ),
                         onPressed: () {
-                          _getWidth();
                           setState(() {
                             // 同样的，点击动态播放或者暂停
                             _controller.value.isPlaying
@@ -259,20 +259,23 @@ class _VideoPlayerTextState extends State<VideoPlayerText> {
     }
   }
 
+  //初始化
   @override
   void initState() {
     _urlChange(); // 初始进行一次url加载
     super.initState();
   }
 
+  //数据变化的时候
   @override
   void didUpdateWidget(VideoPlayerText oldWidget) {
-    if (oldWidget.url != widget.url) {
+    if (oldWidget.url != widget.url || oldWidget.file != widget.file ) {
       _urlChange(); // url变化时重新执行一次url加载
     }
     super.didUpdateWidget(oldWidget);
   }
 
+  //销毁的时候
   @override
   void dispose() {
     if (_controller != null) {
@@ -283,9 +286,9 @@ class _VideoPlayerTextState extends State<VideoPlayerText> {
     super.dispose();
   }
 
-  //改变视频url
+  //改变视频url和file
   void _urlChange() {
-    if (widget.url == null || widget.url == '') return;
+    if ((widget.url == null || widget.url == '') && (widget.file == null || widget.file == '')) return;
     if (_controller != null) {
       // 如果控制器存在，清理掉重新创建
       _controller.removeListener(_videoListener);
@@ -298,14 +301,25 @@ class _VideoPlayerTextState extends State<VideoPlayerText> {
       _position = Duration(seconds: 0);
     });
     // 加载network的url，也支持本地文件，自行阅览官方api
-    _controller = VideoPlayerController.network(widget.url)
-      ..initialize().then((_) {
-        // 加载资源完成时，监听播放进度，并且标记_videoInit=true加载完成
-        _controller.addListener(_videoListener);
-        setState(() {
-          _videoInit = true;
+    if (widget.url == null) {
+      _controller = VideoPlayerController.file(widget.file)
+        ..initialize().then((_) {
+          // 加载资源完成时，监听播放进度，并且标记_videoInit=true加载完成
+          _controller.addListener(_videoListener);
+          setState(() {
+            _videoInit = true;
+          });
         });
-      });
+    } else {
+      _controller = VideoPlayerController.network(widget.url)
+        ..initialize().then((_) {
+          // 加载资源完成时，监听播放进度，并且标记_videoInit=true加载完成
+          _controller.addListener(_videoListener);
+          setState(() {
+            _videoInit = true;
+          });
+        });
+    }
   }
 
   //视频监听（进度条）
@@ -321,6 +335,7 @@ class _VideoPlayerTextState extends State<VideoPlayerText> {
     });
   }
 
+  //视频控件显示隐藏控制
   void _togglePlayControl() {
     setState(() {
       if (_hidePlayControl) {
@@ -339,12 +354,7 @@ class _VideoPlayerTextState extends State<VideoPlayerText> {
     });
   }
 
-  void _getWidth() {
-    print(_isFullScreen);
-    print("width: " + widget.width.toString());
-    print("height: " + widget.height.toString());
-  }
-
+  //控件隐藏计时器
   void _startPlayControlTimer() {
     // 计时器，用法和前端js的大同小异
     if (_timer != null) _timer.cancel();
@@ -359,6 +369,7 @@ class _VideoPlayerTextState extends State<VideoPlayerText> {
     });
   }
 
+  //全屏
   void _toggleFullScreen() {
     setState(() {
       if (_isFullScreen) {

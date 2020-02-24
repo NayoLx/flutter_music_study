@@ -1,7 +1,9 @@
+import 'dart:io';
 import 'dart:ui';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_music/pages/VideoPlayerText.dart';
+import 'package:image_picker/image_picker.dart';
 
 void main() => runApp(Index());
 
@@ -24,6 +26,7 @@ class contextPage extends StatefulWidget {
 class contextPageState extends State<contextPage> {
   bool get _isFullScreen =>
       MediaQuery.of(context).orientation == Orientation.landscape;
+  File _video;
 
   Size get _window => MediaQuery.of(context).size;
 
@@ -32,16 +35,41 @@ class contextPageState extends State<contextPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: Container(
-        // 该组件宽高默认填充父控件，你也可以自己设置宽高
-        child: VideoPlayerText(
-          url:
-              'https://gss3.baidu.com/6LZ0ej3k1Qd3ote6lo7D0j9wehsv/tieba-smallvideo-transcode-crf/60609889_0b5d29ee8e09fad4cc4f40f314d737ca_0.mp4',
-          title: '示例视频',
-          width: _window.width,
-          height: _isFullScreen ? _window.height : _window.width / 16 * 9,
-        ),
-      ),
-    );
+//        appBar: !_isFullScreen ? AppBar(
+//          title: Text('xxx'),
+//        ) : null,
+        body: Container(
+            // 该组件宽高默认填充父控件，你也可以自己设置宽高
+            child: _video == null || _video == ''
+                ? VideoPlayerText(
+                    url:
+                        'https://gss3.baidu.com/6LZ0ej3k1Qd3ote6lo7D0j9wehsv/tieba-smallvideo-transcode-crf/60609889_0b5d29ee8e09fad4cc4f40f314d737ca_0.mp4',
+                    title: '示例视频',
+                    width: _window.width,
+                    height:
+                        _isFullScreen ? _window.height : _window.width / 16 * 9,
+                  )
+                : VideoPlayerText(
+                    file: _video,
+                    title: '示例视频',
+                    width: _window.width,
+                    height:
+                        _isFullScreen ? _window.height : _window.width / 16 * 9,
+                  )),
+        floatingActionButton: !_isFullScreen
+            ? FloatingActionButton(
+                onPressed: () async {
+                  File video =
+                      await ImagePicker.pickVideo(source: ImageSource.gallery);
+                  if (video != null && video != '') {
+                    setState(() {
+                      _video = video;
+                    });
+                  }
+                },
+                tooltip: 'pickImage',
+                child: new Icon(Icons.add),
+              )
+            : null);
   }
 }
