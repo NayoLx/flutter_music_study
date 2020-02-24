@@ -29,7 +29,7 @@ class _liquidPageState extends State<LiquidPageState> {
     ScreenUtil.instance = ScreenUtil(width: 1000, height: 2111)..init(context);
     return Container(
       child: LiquidSwipe(
-        pages: [
+        pages: <Container> [
           Container(
             color: Colors.blue,
             child: Center(
