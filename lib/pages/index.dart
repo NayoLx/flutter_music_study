@@ -30,7 +30,6 @@ class contextPageState extends State<contextPage> {
 
   Size get _window => MediaQuery.of(context).size;
 
-//  http://www.sample-videos.com/video123/mp4/720/big_buck_bunny_720p_20mb.mp4
 //  https://gss3.baidu.com/6LZ0ej3k1Qd3ote6lo7D0j9wehsv/tieba-smallvideo-transcode-crf/60609889_0b5d29ee8e09fad4cc4f40f314d737ca_0.mp4
   @override
   Widget build(BuildContext context) {
@@ -42,6 +41,7 @@ class contextPageState extends State<contextPage> {
             // 该组件宽高默认填充父控件，你也可以自己设置宽高
             child: _video == null || _video == ''
                 ? VideoPlayerText(
+                    //network视频
                     url:
                         'https://gss3.baidu.com/6LZ0ej3k1Qd3ote6lo7D0j9wehsv/tieba-smallvideo-transcode-crf/60609889_0b5d29ee8e09fad4cc4f40f314d737ca_0.mp4',
                     title: '示例视频',
@@ -50,6 +50,7 @@ class contextPageState extends State<contextPage> {
                         _isFullScreen ? _window.height : _window.width / 16 * 9,
                   )
                 : VideoPlayerText(
+                    //本地file视频
                     file: _video,
                     title: '示例视频',
                     width: _window.width,

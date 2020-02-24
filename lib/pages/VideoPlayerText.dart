@@ -10,7 +10,7 @@ import 'package:video_player/video_player.dart'; // 引入官方插件
 class VideoPlayerText extends StatefulWidget {
   VideoPlayerText({
     @required this.url, // 当前需要播放的地址
-    this.file,
+    @required this.file, //浏览本地视频的地址
     @required this.width, // 播放器尺寸（大于等于视频播放区域）
     @required this.height,
     this.title = '', // 视频需要显示的标题
@@ -37,8 +37,8 @@ class VideoPlayerText extends StatefulWidget {
 class _VideoPlayerTextState extends State<VideoPlayerText> {
   bool _videoInit = false; // video控件管理器
   VideoPlayerController _controller; // 记录video播放进度
-  Duration _position = Duration(seconds: 0);
-  Duration _totalDuration = Duration(seconds: 0);
+  Duration _position = Duration(seconds: 0); //播放时长
+  Duration _totalDuration = Duration(seconds: 0); //总时长
 
   // 记录播放控件ui是否显示(进度条，播放按钮，全屏按钮等等)
   Timer _timer; // 计时器，用于延迟隐藏控件ui
@@ -67,7 +67,8 @@ class _VideoPlayerTextState extends State<VideoPlayerText> {
                   },
                   child: _videoInit
                       ? Center(
-                          child: AspectRatio(         // 加载url或者file成功时，根据视频比例渲染播放器
+                          child: AspectRatio(
+                            // 加载url或者file成功时，根据视频比例渲染播放器
                             aspectRatio: _controller.value.aspectRatio,
                             child: VideoPlayer(_controller),
                           ),
@@ -84,7 +85,8 @@ class _VideoPlayerTextState extends State<VideoPlayerText> {
                 _bottomBar(context),
               ],
             )
-          : Center(       // 判断是否传入了url或者file，没有的话显示"暂无视频信息"
+          : Center(
+              // 判断是否传入了url或者file，没有的话显示"暂无视频信息"
               child: Text(
                 '暂无视频信息',
                 style: TextStyle(color: Colors.white),
@@ -269,7 +271,7 @@ class _VideoPlayerTextState extends State<VideoPlayerText> {
   //数据变化的时候
   @override
   void didUpdateWidget(VideoPlayerText oldWidget) {
-    if (oldWidget.url != widget.url || oldWidget.file != widget.file ) {
+    if (oldWidget.url != widget.url || oldWidget.file != widget.file) {
       _urlChange(); // url变化时重新执行一次url加载
     }
     super.didUpdateWidget(oldWidget);
@@ -288,7 +290,8 @@ class _VideoPlayerTextState extends State<VideoPlayerText> {
 
   //改变视频url和file
   void _urlChange() {
-    if ((widget.url == null || widget.url == '') && (widget.file == null || widget.file == '')) return;
+    if ((widget.url == null || widget.url == '') &&
+        (widget.file == null || widget.file == '')) return;
     if (_controller != null) {
       // 如果控制器存在，清理掉重新创建
       _controller.removeListener(_videoListener);
