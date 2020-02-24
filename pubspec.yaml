@@ -29,7 +29,6 @@ dependencies:
   hidden_drawer_menu: ^1.1.2
   video_player: ^0.10.2+5
   orientation: ^1.1.0
-  auto_orientation: ^1.0.5
   screen: ^0.0.5
   common_utils: ^1.1.3
 

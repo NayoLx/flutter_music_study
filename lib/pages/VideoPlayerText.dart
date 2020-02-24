@@ -1,14 +1,13 @@
 import 'dart:async';
 
-import 'package:auto_orientation/auto_orientation.dart';
 import 'package:common_utils/common_utils.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:orientation/orientation.dart';
 import 'package:video_player/video_player.dart'; // 引入官方插件
 
-class MyVideo extends StatefulWidget {
-  MyVideo({
+class VideoPlayerText extends StatefulWidget {
+  VideoPlayerText({
     @required this.url, // 当前需要播放的地址
     @required this.width, // 播放器尺寸（大于等于视频播放区域）
     @required this.height,
@@ -17,22 +16,24 @@ class MyVideo extends StatefulWidget {
 
   // 视频地址
   final String url;
+
   // 视频尺寸比例
   final double width;
   final double height;
+
   // 视频标题
   final String title;
 
   @override
-  State<MyVideo> createState() {
-    return _MyVideoState();
+  State<VideoPlayerText> createState() {
+    return _VideoPlayerTextState();
   }
 }
 
 // 指示video资源是否加载完成，加载完成后会获得总时长和视频长宽比等信息
-class _MyVideoState extends State<MyVideo> {
-  bool _videoInit = false;  // video控件管理器
-  VideoPlayerController _controller;  // 记录video播放进度
+class _VideoPlayerTextState extends State<VideoPlayerText> {
+  bool _videoInit = false; // video控件管理器
+  VideoPlayerController _controller; // 记录video播放进度
   Duration _position = Duration(seconds: 0);
   Duration _totalDuration = Duration(seconds: 0);
 
@@ -51,11 +52,14 @@ class _MyVideoState extends State<MyVideo> {
       height: widget.height,
       color: Colors.black,
       child: widget.url != null
-          ? Stack(                          // 因为控件ui和视频是重叠的，所以要用定位了
+          ? Stack(
+              // 因为控件ui和视频是重叠的，所以要用定位了
               children: <Widget>[
                 _topBar(context),
-                GestureDetector(  // 手势组件
-                  onTap: () {     // 点击显示/隐藏控件ui
+                GestureDetector(
+                  // 手势组件
+                  onTap: () {
+                    // 点击显示/隐藏控件ui
                     _togglePlayControl();
                   },
                   child: _videoInit
@@ -85,53 +89,49 @@ class _MyVideoState extends State<MyVideo> {
                 style: TextStyle(color: Colors.white),
               ),
             ),
-
     );
   }
 
   //头部控制栏
   Widget _topBar(BuildContext context) {
-    return Container(
-      width: double.infinity,
-      height: 40,
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          // 来点黑色到透明的渐变优雅一下
-          begin: Alignment.bottomCenter,
-          end: Alignment.topCenter,
-          colors: [
-            Color.fromRGBO(0, 0, 0, .7),
-            Color.fromRGBO(0, 0, 0, .1)
-          ],
-        ),
-      ),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: <Widget>[
-          //在最上层或者不是横屏则隐藏按钮
-          ModalRoute.of(context).isFirst && !_isFullScreen
-              ? Container()
-              : IconButton(
-              icon: Icon(
-                Icons.arrow_back,
-                color: Colors.white,
-              ),
-              onPressed: backPress),
-          Text(
-            widget.title,
-            style: TextStyle(color: Colors.white),
-          ),
-          //在最上层或者不是横屏则隐藏按钮
-          ModalRoute.of(context).isFirst && !_isFullScreen
-              ? Container()
-              : IconButton(
-            icon: Icon(
-              Icons.arrow_back,
-              color: Colors.transparent,
+    return Offstage(
+      offstage: _hidePlayControl,
+      child: AnimatedOpacity(
+        opacity: _playControlOpacity,
+        duration: Duration(milliseconds: 300),
+        child: Container(
+          width: double.infinity,
+          height: 40,
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              // 来点黑色到透明的渐变优雅一下
+              begin: Alignment.bottomCenter,
+              end: Alignment.topCenter,
+              colors: [
+                Color.fromRGBO(0, 0, 0, .7),
+                Color.fromRGBO(0, 0, 0, .1)
+              ],
             ),
-            onPressed: () {},
           ),
-        ],
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: <Widget>[
+              //在最上层或者不是横屏则隐藏按钮
+              ModalRoute.of(context).isFirst && !_isFullScreen
+                  ? Container()
+                  : IconButton(
+                      icon: Icon(
+                        Icons.arrow_back,
+                        color: Colors.white,
+                      ),
+                      onPressed: backPress),
+              Text(
+                widget.title,
+                style: TextStyle(color: Colors.white),
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }
@@ -166,80 +166,79 @@ class _MyVideoState extends State<MyVideo> {
             ),
             child: _videoInit
                 ? Row(
-              // 加载完成时才渲染,flex布局
-              children: <Widget>[
-                IconButton(
-                  // 播放按钮
-                  padding: EdgeInsets.zero,
-                  iconSize: 26,
-                  icon: Icon(
-                    // 根据控制器动态变化播放图标还是暂停
-                    _controller.value.isPlaying
-                        ? Icons.pause
-                        : Icons.play_arrow,
-                    color: Colors.white,
-                  ),
-                  onPressed: () {
-                    setState(() {
-                      // 同样的，点击动态播放或者暂停
-                      _controller.value.isPlaying
-                          ? _controller.pause()
-                          : _controller.play();
-                      _startPlayControlTimer(); // 操作控件后，重置延迟隐藏控件的timer
-                    });
-                  },
-                ),
-                Flexible(
-                  // 相当于前端的flex: 1
-                  child: VideoProgressIndicator(
-                    _controller,
-                    allowScrubbing: true, // 允许手势操作进度条
-                    padding: EdgeInsets.all(0),
-                    colors: VideoProgressColors(
-                      // 配置进度条颜色，也是video_player现成的，直接用
-                      playedColor:
-                      Theme.of(context).primaryColor,
-                      // 已播放的颜色
-                      bufferedColor:
-                      Color.fromRGBO(255, 255, 255, .5),
-                      // 缓存中的颜色
-                      backgroundColor: Color.fromRGBO(
-                          255, 255, 255, .2), // 为缓存的颜色
-                    ),
-                  ),
-                ),
-                Container(
-                  // 播放时间
-                  margin: EdgeInsets.only(left: 10),
-                  child: Text(
-                    '${DateUtil.formatDateMs(
-                      _position?.inMilliseconds,
-                      format: 'mm:ss',
-                    )}/${DateUtil.formatDateMs(
-                      _totalDuration?.inMilliseconds,
-                      format: 'mm:ss',
-                    )}',
-                    style: TextStyle(color: Colors.white),
-                  ),
-                ),
-                IconButton(
-                  // 全屏/横屏按钮
-                  padding: EdgeInsets.zero,
-                  iconSize: 26,
-                  icon: Icon(
-                    // 根据当前屏幕方向切换图标
-                    _isFullScreen
-                        ? Icons.fullscreen_exit
-                        : Icons.fullscreen,
-                    color: Colors.white,
-                  ),
-                  onPressed: () {
-                    // 点击切换是否全屏
-                    _toggleFullScreen();
-                  },
-                ),
-              ],
-            )
+                    // 加载完成时才渲染,flex布局
+                    children: <Widget>[
+                      IconButton(
+                        // 播放按钮
+                        padding: EdgeInsets.zero,
+                        iconSize: 26,
+                        icon: Icon(
+                          // 根据控制器动态变化播放图标还是暂停
+                          _controller.value.isPlaying
+                              ? Icons.pause
+                              : Icons.play_arrow,
+                          color: Colors.white,
+                        ),
+                        onPressed: () {
+                          _getWidth();
+                          setState(() {
+                            // 同样的，点击动态播放或者暂停
+                            _controller.value.isPlaying
+                                ? _controller.pause()
+                                : _controller.play();
+                            _startPlayControlTimer(); // 操作控件后，重置延迟隐藏控件的timer
+                          });
+                        },
+                      ),
+                      Flexible(
+                        // 相当于前端的flex: 1
+                        child: VideoProgressIndicator(
+                          _controller,
+                          allowScrubbing: true, // 允许手势操作进度条
+                          padding: EdgeInsets.all(0),
+                          colors: VideoProgressColors(
+                            // 配置进度条颜色，也是video_player现成的，直接用
+                            playedColor: Theme.of(context).primaryColor,
+                            // 已播放的颜色
+                            bufferedColor: Color.fromRGBO(255, 255, 255, .5),
+                            // 缓存中的颜色
+                            backgroundColor:
+                                Color.fromRGBO(255, 255, 255, .2), // 为缓存的颜色
+                          ),
+                        ),
+                      ),
+                      Container(
+                        // 播放时间
+                        margin: EdgeInsets.only(left: 10),
+                        child: Text(
+                          '${DateUtil.formatDateMs(
+                            _position?.inMilliseconds,
+                            format: 'mm:ss',
+                          )}/${DateUtil.formatDateMs(
+                            _totalDuration?.inMilliseconds,
+                            format: 'mm:ss',
+                          )}',
+                          style: TextStyle(color: Colors.white),
+                        ),
+                      ),
+                      IconButton(
+                        // 全屏/横屏按钮
+                        padding: EdgeInsets.zero,
+                        iconSize: 26,
+                        icon: Icon(
+                          // 根据当前屏幕方向切换图标
+                          _isFullScreen
+                              ? Icons.fullscreen_exit
+                              : Icons.fullscreen,
+                          color: Colors.white,
+                        ),
+                        onPressed: () {
+                          // 点击切换是否全屏
+                          _toggleFullScreen();
+                        },
+                      ),
+                    ],
+                  )
                 : Container(),
           ),
         ),
@@ -253,9 +252,9 @@ class _MyVideoState extends State<MyVideo> {
     // 如果是全屏，点击返回键则关闭全屏，如果不是，则系统返回键
     if (_isFullScreen) {
       _toggleFullScreen();
-    } else if(ModalRoute.of(context).isFirst) {
+    } else if (ModalRoute.of(context).isFirst) {
       SystemNavigator.pop();
-    }else{
+    } else {
       Navigator.pop(context);
     }
   }
@@ -267,7 +266,7 @@ class _MyVideoState extends State<MyVideo> {
   }
 
   @override
-  void didUpdateWidget(MyVideo oldWidget) {
+  void didUpdateWidget(VideoPlayerText oldWidget) {
     if (oldWidget.url != widget.url) {
       _urlChange(); // url变化时重新执行一次url加载
     }
@@ -340,6 +339,12 @@ class _MyVideoState extends State<MyVideo> {
     });
   }
 
+  void _getWidth() {
+    print(_isFullScreen);
+    print("width: " + widget.width.toString());
+    print("height: " + widget.height.toString());
+  }
+
   void _startPlayControlTimer() {
     // 计时器，用法和前端js的大同小异
     if (_timer != null) _timer.cancel();
@@ -356,7 +361,8 @@ class _MyVideoState extends State<MyVideo> {
 
   void _toggleFullScreen() {
     setState(() {
-      if (_isFullScreen) { // 如果是全屏就切换竖屏
+      if (_isFullScreen) {
+        // 如果是全屏就切换竖屏
         OrientationPlugin.forceOrientation(DeviceOrientation.portraitUp);
       } else {
         OrientationPlugin.forceOrientation(DeviceOrientation.landscapeRight);
