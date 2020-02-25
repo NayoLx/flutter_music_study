@@ -372,7 +372,7 @@ class _VideoPlayerTextState extends State<VideoPlayerText> {
     }
     double value = _setHorizontalValue();
     int current = (value * _controller.value.duration.inMilliseconds).toInt();
-    await _controller.seekTo(Duration(milliseconds: current));
+    await _controller.seekTo(Duration(milliseconds: current)); //进度跳转
   }
 
   //进度条变化

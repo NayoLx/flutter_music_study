@@ -6,9 +6,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_music/pages/VideoPlayerText.dart';
 import 'package:image_picker/image_picker.dart';
 
-void main() => runApp(Index());
+void main() => runApp(musicIndex());
 
-class Index extends StatelessWidget {
+class musicIndex extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -28,11 +28,9 @@ class contextPageState extends State<contextPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-//        appBar: !_isFullScreen ? AppBar(
-//          title: Text('xxx'),
-//        ) : null,
-        body: Center(
-          child: Text('hello '),
-        ));
+      body: Center(
+        child: Text('hello '),
+      ),
+    );
   }
 }

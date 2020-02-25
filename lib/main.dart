@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_music/navigator.dart';
 import 'package:flutter_music/pages/index.dart';
+import 'package:flutter_music/pages/music.dart';
 import 'package:flutter_music/pages/my.dart';
+import 'package:flutter_music/pages/video.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:hidden_drawer_menu/hidden_drawer/hidden_drawer_menu.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -53,7 +55,8 @@ class _MyHomePageState extends State<MyHomePage> {
           String title;
           switch(position){
             case 0 : screenCurrent = Index(); title = '首页'; break;
-            case 1 : screenCurrent = My(); title = '个人中心'; break;
+            case 1 : screenCurrent = videoIndex(); title = '视频中心'; break;
+            case 2 : screenCurrent = musicIndex(); title = '音乐'; break;
           }
           return Scaffold(
             body: screenCurrent,
@@ -86,9 +89,15 @@ class _MenuState extends State<Menu> {
             },
           ),
           FlatButton(
-            child: Text("个人中心",style: TextStyle(color: Colors.white,fontSize: 20)),
+            child: Text("视频中心",style: TextStyle(color: Colors.white,fontSize: 20)),
             onPressed: (){
               SimpleHiddenDrawerProvider.of(context).setSelectedMenuPosition(1);
+            },
+          ),
+          FlatButton(
+            child: Text("音乐",style: TextStyle(color: Colors.white,fontSize: 20)),
+            onPressed: (){
+              SimpleHiddenDrawerProvider.of(context).setSelectedMenuPosition(2);
             },
           )
         ],
